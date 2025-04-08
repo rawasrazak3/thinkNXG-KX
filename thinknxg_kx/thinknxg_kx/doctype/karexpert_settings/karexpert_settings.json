@@ -1,0 +1,58 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-04-02 13:24:17.358675",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "token_url",
+  "billing_url",
+  "facility_id",
+  "table_uijt"
+ ],
+ "fields": [
+  {
+   "fieldname": "token_url",
+   "fieldtype": "Data",
+   "label": "Token URL"
+  },
+  {
+   "fieldname": "billing_url",
+   "fieldtype": "Data",
+   "label": "Billing URL"
+  },
+  {
+   "fieldname": "facility_id",
+   "fieldtype": "Data",
+   "label": "Facility ID"
+  },
+  {
+   "fieldname": "table_uijt",
+   "fieldtype": "Table",
+   "options": "Karexpert Table"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2025-04-03 21:55:49.319257",
+ "modified_by": "Administrator",
+ "module": "thinkNXG KX",
+ "name": "Karexpert Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

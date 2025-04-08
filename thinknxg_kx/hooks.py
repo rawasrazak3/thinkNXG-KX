@@ -23,6 +23,25 @@ app_license = "mit"
 
 # Includes in <head>
 # ------------------
+fixtures = [
+    {
+        "doctype": "Custom Field",
+        "filters": [
+            ["name", "in", 
+             [
+                 "Sales Invoice-custom_payer",
+                 "Sales Invoice-custom_bill_no",
+                 "Sales Invoice-custom_uh_id",
+                 "Sales Invoice-custom_admission_id_",
+                 "Sales Invoice-custom_admission_type",
+                 "Sales Invoice-custom_bill",
+                 "Purchase Invoice-custom_bill_number"
+             ]
+            ]
+        ]
+    }
+]
+
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/thinknxg_kx/css/thinknxg_kx.css"
@@ -147,7 +166,23 @@ app_license = "mit"
 
 # Scheduled Tasks
 # ---------------
-
+# scheduled_jobs = [
+#     {
+#         "method": "thinknxg_kx.thinknxg_kx.custom_script.create_sales_invoice.main",
+#         "frequency": "cron",
+#         "cron": "*/5 * * * *"  # Every 5 minutes
+#     }
+# ]
+scheduler_events = {
+    "cron": {
+        "*/5 * * * *": [
+            "thinknxg_kx.thinknxg_kx.custom_script.create_sales_invoice.main",
+            "thinknxg_kx.thinknxg_kx.custom_script.create_si_ip.main",
+            # "thinknxg_kx.thinknxg_kx.custom_script.advance_deposit.main",
+            # "thinknxg_kx.thinknxg_kx.custom_script.due_settlement.main",
+        ]
+    }
+}
 # scheduler_events = {
 # 	"all": [
 # 		"thinknxg_kx.tasks.all"
