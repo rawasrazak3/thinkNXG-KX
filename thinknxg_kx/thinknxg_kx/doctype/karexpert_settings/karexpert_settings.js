@@ -50,21 +50,25 @@ frappe.ui.form.on("Karexpert Table", {
 		let row = locals[cdt][cdn];
 
 		let method_map = {
-			"Op billing": {
+			"OP BILLING": {
 				method: "thinknxg_kx.thinknxg_kx.custom_script.create_sales_invoice.main",
 				message: "OP Sales Invoice Created"
 			},
-			"IPD billing": {
+			"IPD BILLING": {
 				method: "thinknxg_kx.thinknxg_kx.custom_script.create_si_ip.main",
 				message: "IP Sales Invoice Created"
 			},
-			"IPD billing": {
-				method: "thinknxg_kx.thinknxg_kx.custom_script.create_si_ip.main",
-				message: "IP Sales Invoice Created"
+			"DUE SETTLEMENT": {
+				method:"thinknxg_kx.thinknxg_kx.custom_script.due_settlement.main",
+				message: "Due settlement Created"
 			},
-			"Advance Deposit": {
+			"ADVANCE DEPOSIT": {
 				method: "thinknxg_kx.thinknxg_kx.custom_script.advance_deposit.main",
 				message: "Advance Deposit Created"
+			},
+			"GRN CREATION DETAILS": {
+				method: "thinknxg_kx.thinknxg_kx.custom_script.create_purchase_invoice.main",
+				message: "Purchase Invoice Created"
 			}
 		};
 

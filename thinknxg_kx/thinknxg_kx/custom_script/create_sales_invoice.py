@@ -4,7 +4,7 @@ import json
 from frappe.utils import nowdate
 from datetime import datetime
 from thinknxg_kx.thinknxg_kx.doctype.karexpert_settings.karexpert_settings import fetch_api_details
-billing_type = "Op billing"
+billing_type = "OP BILLING"
 settings = frappe.get_single("Karexpert Settings")
 TOKEN_URL = settings.get("token_url")
 BILLING_URL = settings.get("billing_url")
@@ -193,7 +193,7 @@ def create_sales_invoice(billing_data):
     # Tax table entry
     taxes = [{
         "charge_type": "On Net Total",
-        "account_head": "Miscellaneous Expenses - MH",  # Change to your tax account
+        "account_head": "VAT 5% - MH" if tax_amount > 0 else "VAT 0% - MH",  # Change to your tax account
         # "rate": 0 if tax_amount == 0 else (tax_amount / billing_data["total_amount"]) * 100,
         "tax_amount": 0 if tax_amount == 0 else tax_amount,
         "description": "VAT 5%" if tax_amount > 0 else "VAT 0%"
@@ -237,7 +237,7 @@ def main():
         frappe.log("JWT Token fetched successfully.")
 
         from_date = 1672531200000  
-        to_date = 1742462820000    
+        to_date = 1966962420000    
         billing_data = fetch_op_billing(jwt_token, from_date, to_date)
         frappe.log("OP Billing data fetched successfully.")
 
