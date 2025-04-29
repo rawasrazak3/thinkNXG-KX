@@ -5,7 +5,7 @@ from frappe.utils import nowdate
 from datetime import datetime
 from thinknxg_kx.thinknxg_kx.doctype.karexpert_settings.karexpert_settings import fetch_api_details
 
-billing_type = "IPD billing"
+billing_type = "IPD BILLING"
 settings = frappe.get_single("Karexpert Settings")
 TOKEN_URL = settings.get("token_url")
 BILLING_URL = settings.get("billing_url")
@@ -200,7 +200,7 @@ def create_sales_invoice(billing_data):
     # Tax table entry
     taxes = [{
         "charge_type": "On Net Total",
-        "account_head": "Miscellaneous Expenses - MH",  # Change to your tax account
+        "account_head": "VAT 5%" if tax_amount > 0 else "VAT 0%",  # Change to your tax account
         # "rate": 0 if tax_amount == 0 else (tax_amount / billing_data["total_amount"]) * 100,
         "tax_amount": 0 if tax_amount == 0 else tax_amount,
         "description": "VAT 5%" if tax_amount > 0 else "VAT 0%"
@@ -212,6 +212,7 @@ def create_sales_invoice(billing_data):
         "custom_payer": payer,
         "patient": patient,
         "custom_bill": "IP Billing",
+        "set_posting_time":1,
         "posting_date": formatted_date,
         "due_date": formatted_date,
         "custom_bill_no": bill_no,
@@ -238,7 +239,7 @@ def create_sales_invoice(billing_data):
 
     except Exception as e:
         frappe.log_error(f"Failed to create Sales Invoice: {e}")
-
+@frappe.whitelist()
 def main():
     try:
         jwt_token = get_jwt_token()
