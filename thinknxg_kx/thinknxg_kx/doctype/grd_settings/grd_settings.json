@@ -1,0 +1,66 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-04-27 22:20:51.297476",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "grd_default_settings_section",
+  "default_grd_supervisor",
+  "column_break_owip",
+  "renewal_extension_costing_section",
+  "table_dkcn"
+ ],
+ "fields": [
+  {
+   "fieldname": "grd_default_settings_section",
+   "fieldtype": "Section Break",
+   "label": "GRD Default Settings"
+  },
+  {
+   "fieldname": "default_grd_supervisor",
+   "fieldtype": "Link",
+   "label": "Default GRD Supervisor",
+   "options": "User"
+  },
+  {
+   "fieldname": "column_break_owip",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "renewal_extension_costing_section",
+   "fieldtype": "Section Break",
+   "label": "Renewal Extension Costing"
+  },
+  {
+   "fieldname": "table_dkcn",
+   "fieldtype": "Table",
+   "options": "GRD Renewal Extension Cost"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2025-04-27 22:24:57.725083",
+ "modified_by": "Administrator",
+ "module": "thinkNXG KX",
+ "name": "GRD Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
