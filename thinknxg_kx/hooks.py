@@ -36,7 +36,21 @@ fixtures = [
                  "Sales Invoice-custom_admission_type",
                  "Sales Invoice-custom_bill",
                  "Purchase Invoice-custom_bill_number",
-                 "Supplier-custom_supplier_code"
+                 "Supplier-custom_supplier_code",
+                 "Employee-custom_visa_details",
+                 "Employee-custom_civil_id",
+                 "Employee-custom_column_break_shl8d",
+                 "Employee-custom_residency_expiry_date",
+                 "Employee-custom_civil_id_expiry_date",
+                 "Employee-custom_document_details",
+                 "Employee-custom_residency_id",
+                 "Employee-custom_medical_insurance",
+                 "Employee-custom_work_permit",
+                 "Employee-custom_contract",
+                 "Employee-custom_column_break_32lxg",
+                 "Employee-custom_medical_insurance_expiry_date",
+                 "Employee-custom_work_permit__expiry_date",
+                 "Employee-custom_contract___expiry_date"
              ]
             ]
         ]
