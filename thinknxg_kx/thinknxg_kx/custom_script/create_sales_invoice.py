@@ -210,7 +210,7 @@ def create_sales_invoice(billing_data):
         "due_date": formatted_date,
         "custom_bill_no": bill_no,
         "custom_uh_id": billing_data["uhId"],
-        "custom_admission_id": billing_data["admissionId"],
+        "custom_admission_id_": billing_data["admissionId"],
         "custom_admission_type": billing_data["admissionType"],
         "items": items,
         "discount_amount": discount_amount,

@@ -4,8 +4,7 @@ import json
 from frappe.utils import nowdate
 from datetime import datetime
 from thinknxg_kx.thinknxg_kx.doctype.karexpert_settings.karexpert_settings import fetch_api_details
-
-billing_type = "IPD BILLING"
+billing_type = "OP PHARMACY BILLING"
 settings = frappe.get_single("Karexpert Settings")
 TOKEN_URL = settings.get("token_url")
 BILLING_URL = settings.get("billing_url")
@@ -15,9 +14,10 @@ facility_id = settings.get("facility_id")
 billing_row = frappe.get_value("Karexpert Table", {"billing_type": billing_type},
                                 ["client_code", "integration_key", "x_api_key"], as_dict=True)
 
+
+headers_token = fetch_api_details(billing_type)
 # TOKEN_URL = "https://metro.kxstage.com/external/api/v1/token"
 # BILLING_URL = "https://metro.kxstage.com/external/api/v1/integrate"
-
 # headers_token = {
 #     "Content-Type": "application/json",
 #     # "clientCode": "METRO_THINKNXG_FI",
@@ -30,8 +30,6 @@ billing_row = frappe.get_value("Karexpert Table", {"billing_type": billing_type}
 #     # "x-api-key": "kfhgjfgjf0980gdfgfds"
 #     "x-api-key": billing_row["x_api_key"]
 # }
-headers_token = fetch_api_details(billing_type)
-
 
 def get_jwt_token():
     response = requests.post(TOKEN_URL, headers=headers_token)
@@ -40,7 +38,7 @@ def get_jwt_token():
     else:
         frappe.throw(f"Failed to fetch JWT token: {response.status_code} - {response.text}")
 
-def fetch_ip_billing(jwt_token, from_date, to_date):
+def fetch_op_billing(jwt_token, from_date, to_date):
     headers_billing = {
         "Content-Type": headers_token["Content-Type"],
         # "clientCode": "METRO_THINKNXG_FI",
@@ -54,7 +52,8 @@ def fetch_ip_billing(jwt_token, from_date, to_date):
     if response.status_code == 200:
         return response.json()
     else:
-        frappe.throw(f"Failed to fetch IP Billing data: {response.status_code} - {response.text}")
+        frappe.throw(f"Failed to fetch OP Pharmacy Billing data: {response.status_code} - {response.text}")
+
 def get_or_create_customer(customer_name):
     existing_customer = frappe.db.exists("Customer", {"customer_name": customer_name})
     if existing_customer:
@@ -130,17 +129,11 @@ def create_sales_invoice(billing_data):
         frappe.log(f"Sales Invoice with bill_no {bill_no} already exists.")
         return
     
-    customer_name = billing_data["patient_name"]
-    payer_name = billing_data["payer_name"]
+    customer_name = billing_data["payer_name"]
     patient_name = billing_data["patient_name"]
     gender = billing_data["patient_gender"]
     customer = get_or_create_customer(customer_name)
     patient = get_or_create_patient(patient_name, gender)
-    payer = get_or_create_customer(payer_name)
-    # Check if there is an amount in IP ADVANCE mode
-    payment_details = billing_data.get("payment_transaction_details", [])
-    has_ip_advance = any(payment.get("amount", 0) > 0 and payment.get("payment_mode_code") == "IP ADVANCE" for payment in payment_details)
-
     
     
     
@@ -181,16 +174,17 @@ def create_sales_invoice(billing_data):
 
     # Ensure items and cost centers exist before adding them to Sales Invoice
     items = []
+    
     for service in billing_data.get("item_details", []):
-        cost_center = get_or_create_cost_center(service["department"], service["subDepartment"])
+        
         item_code = get_or_create_item(service["serviceName"],service["serviceType"],service["serviceCode"])  # Ensure item exists
-
+        cost_center = get_or_create_cost_center(service["serviceType"], service["storeName"])
         items.append({
             "item_code": item_code,
             "qty": 1,
             "rate": service["service_selling_amount"],
             "amount": service["service_selling_amount"],
-            "cost_center": cost_center
+            # "cost_center": cost_center
         })
 
     
@@ -200,7 +194,7 @@ def create_sales_invoice(billing_data):
     # Tax table entry
     taxes = [{
         "charge_type": "On Net Total",
-        "account_head": "VAT 5%" if tax_amount > 0 else "VAT 0%",  # Change to your tax account
+        "account_head": "VAT 5% - MH" if tax_amount > 0 else "VAT 0% - MH",  # Change to your tax account
         # "rate": 0 if tax_amount == 0 else (tax_amount / billing_data["total_amount"]) * 100,
         "tax_amount": 0 if tax_amount == 0 else tax_amount,
         "description": "VAT 5%" if tax_amount > 0 else "VAT 0%"
@@ -208,10 +202,10 @@ def create_sales_invoice(billing_data):
     
     sales_invoice = frappe.get_doc({
         "doctype": "Sales Invoice",
-        "customer": customer,
-        "custom_payer": payer,
+        "customer": patient,
+        "custom_payer": customer,
         "patient": patient,
-        "custom_bill": "IP Billing",
+        "custom_bill": "PHARMACY",
         "set_posting_time":1,
         "posting_date": formatted_date,
         "due_date": formatted_date,
@@ -219,24 +213,23 @@ def create_sales_invoice(billing_data):
         "custom_uh_id": billing_data["uhId"],
         "custom_admission_id_": billing_data["admissionId"],
         "custom_admission_type": billing_data["admissionType"],
+        "cost_center":cost_center,
         "items": items,
         "discount_amount": discount_amount,
         "total": billing_data["total_amount"],
         "grand_total": billing_data["total_amount"] + tax_amount,        
         "disable_rounded_total":1,
-        "taxes": taxes,
-        "allocate_advances_automatically": 1 if has_ip_advance else 0
+        "taxes": taxes
     })
     
     try:
         frappe.get_doc(sales_invoice).insert(ignore_permissions=True)
         frappe.db.commit()
-        sales_invoice.submit()
-        create_journal_entry(sales_invoice.name, billing_data)
+        # sales_invoice.submit()
         frappe.log(f"Sales Invoice created successfully with bill_no: {bill_no}")
-        # create_payment_entry(sales_invoice.name, customer, billing_data)
-        
+        create_journal_entry(sales_invoice.name, billing_data)
 
+        # create_payment_entry(sales_invoice.name, customer, billing_data)
     except Exception as e:
         frappe.log_error(f"Failed to create Sales Invoice: {e}")
 @frappe.whitelist()
@@ -247,11 +240,11 @@ def main():
 
         from_date = 1672531200000  
         to_date = 1966962420000    
-        billing_data = fetch_ip_billing(jwt_token, from_date, to_date)
-        frappe.log("IP Billing data fetched successfully.")
+        billing_data = fetch_op_billing(jwt_token, from_date, to_date)
+        frappe.log("OP Billing data fetched successfully.")
 
         for billing in billing_data.get("jsonResponse", []):
-            create_sales_invoice(billing["ipd_billing"])
+            create_sales_invoice(billing["pharmacy_billing"])
 
     except Exception as e:
         frappe.log_error(f"Error: {e}")
@@ -305,7 +298,7 @@ def create_journal_entry(sales_invoice_name, billing_data):
 
     # Handling Other Payment Modes (UPI, Card, etc.)
     bank_payment_total = sum(
-        p["amount"] for p in payment_details if p["payment_mode_code"] not in ["cash", "credit","IP ADVANCE"]
+        p["amount"] for p in payment_details if p["payment_mode_code"].lower() not in ["cash", "credit","IP ADVANCE"]
     )
     if bank_payment_total > 0:
         je_entries.append({
@@ -322,7 +315,7 @@ def create_journal_entry(sales_invoice_name, billing_data):
             "doctype": "Journal Entry",
             "posting_date": nowdate(),
             "accounts": je_entries,
-            "user_remark": f"Sales Invoice: {sales_invoice_name}, Patient: {patient_name} (UHID: {uhid})"
+            "user_remark": f"Pharmacy Sales Invoice: {sales_invoice_name}, Patient: {patient_name} (UHID: {uhid})"
         })
         je_doc.insert(ignore_permissions=True)
         frappe.db.commit()
