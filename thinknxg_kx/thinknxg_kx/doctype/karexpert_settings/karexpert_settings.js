@@ -66,6 +66,14 @@ frappe.ui.form.on("Karexpert Table", {
 				method: "thinknxg_kx.thinknxg_kx.custom_script.advance_deposit.main",
 				message: "Advance Deposit Created"
 			},
+			"ADVANCE DEPOSIT REFUND": {
+				method: "thinknxg_kx.thinknxg_kx.custom_script.advance_deposit_refund.main",
+				message: "Advance Deposit Refund Created"
+			},
+			"OP PHARMACY BILLING": {
+				method: "thinknxg_kx.thinknxg_kx.custom_script.op_pharmacy_bill.main",
+				message: "OP pharmacy Sales Invoice Created"
+			},
 			"GRN CREATION DETAILS": {
 				method: "thinknxg_kx.thinknxg_kx.custom_script.create_purchase_invoice.main",
 				message: "Purchase Invoice Created"

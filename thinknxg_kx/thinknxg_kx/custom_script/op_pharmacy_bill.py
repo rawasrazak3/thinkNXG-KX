@@ -4,7 +4,7 @@ import json
 from frappe.utils import nowdate
 from datetime import datetime
 from thinknxg_kx.thinknxg_kx.doctype.karexpert_settings.karexpert_settings import fetch_api_details
-billing_type = "OP BILLING"
+billing_type = "OP PHARMACY BILLING"
 settings = frappe.get_single("Karexpert Settings")
 TOKEN_URL = settings.get("token_url")
 BILLING_URL = settings.get("billing_url")
@@ -52,7 +52,7 @@ def fetch_op_billing(jwt_token, from_date, to_date):
     if response.status_code == 200:
         return response.json()
     else:
-        frappe.throw(f"Failed to fetch OP Billing data: {response.status_code} - {response.text}")
+        frappe.throw(f"Failed to fetch OP Pharmacy Billing data: {response.status_code} - {response.text}")
 
 def get_or_create_customer(customer_name):
     existing_customer = frappe.db.exists("Customer", {"customer_name": customer_name})
@@ -87,13 +87,10 @@ def get_or_create_patient(patient_name,gender):
 def get_or_create_cost_center(department, sub_department):
     parent_cost_center_name = f"{department}(G)"
     sub_cost_center_name = f"{sub_department}"
-    print("parent", parent_cost_center_name)
-    print("sub", sub_cost_center_name)
 
     # Check if parent cost center exists, if not, create it
     existing_parent = frappe.db.exists("Cost Center", {"cost_center_name": parent_cost_center_name})
     if not existing_parent:
-        print("creating cost center")
         parent_cost_center = frappe.get_doc({
             "doctype": "Cost Center",
             "cost_center_name": parent_cost_center_name,
@@ -124,7 +121,6 @@ def get_or_create_cost_center(department, sub_department):
 
 def create_sales_invoice(billing_data):
     bill_no = billing_data["bill_no"]
-    print("bill no", bill_no)
     date = billing_data["g_creation_time"]
     datetimes =  date/1000.0
     dt = datetime.fromtimestamp(datetimes)
@@ -178,16 +174,17 @@ def create_sales_invoice(billing_data):
 
     # Ensure items and cost centers exist before adding them to Sales Invoice
     items = []
+    
     for service in billing_data.get("item_details", []):
-        cost_center = get_or_create_cost_center(service["department"], service["subDepartment"])
+        
         item_code = get_or_create_item(service["serviceName"],service["serviceType"],service["serviceCode"])  # Ensure item exists
-
+        cost_center = get_or_create_cost_center(service["serviceType"], service["storeName"])
         items.append({
             "item_code": item_code,
             "qty": 1,
             "rate": service["service_selling_amount"],
             "amount": service["service_selling_amount"],
-            "cost_center": cost_center
+            # "cost_center": cost_center
         })
 
     
@@ -200,7 +197,7 @@ def create_sales_invoice(billing_data):
         "account_head": "2370 - VAT 5% - MH" if tax_amount > 0 else "2360 - VAT 0% - MH",  # Change to your tax account
         # "rate": 0 if tax_amount == 0 else (tax_amount / billing_data["total_amount"]) * 100,
         "tax_amount": 0 if tax_amount == 0 else tax_amount,
-        "description": "2370 - VAT 5% - MH" if tax_amount > 0 else "2360 - VAT 0% - MH"
+        "description": "VAT 5%" if tax_amount > 0 else "VAT 0%"
     }]
     
     sales_invoice = frappe.get_doc({
@@ -208,7 +205,7 @@ def create_sales_invoice(billing_data):
         "customer": patient,
         "custom_payer": customer,
         "patient": patient,
-        "custom_bill": "OP Billing",
+        "custom_bill": "PHARMACY",
         "set_posting_time":1,
         "posting_date": formatted_date,
         "due_date": formatted_date,
@@ -216,6 +213,7 @@ def create_sales_invoice(billing_data):
         "custom_uh_id": billing_data["uhId"],
         "custom_admission_id_": billing_data["admissionId"],
         "custom_admission_type": billing_data["admissionType"],
+        "cost_center":cost_center,
         "items": items,
         "discount_amount": discount_amount,
         "total": billing_data["total_amount"],
@@ -227,7 +225,7 @@ def create_sales_invoice(billing_data):
     try:
         frappe.get_doc(sales_invoice).insert(ignore_permissions=True)
         frappe.db.commit()
-        sales_invoice.submit()
+        # sales_invoice.submit()
         frappe.log(f"Sales Invoice created successfully with bill_no: {bill_no}")
         create_journal_entry(sales_invoice.name, billing_data)
 
@@ -246,7 +244,7 @@ def main():
         frappe.log("OP Billing data fetched successfully.")
 
         for billing in billing_data.get("jsonResponse", []):
-            create_sales_invoice(billing["op_billing"])
+            create_sales_invoice(billing["pharmacy_billing"])
 
     except Exception as e:
         frappe.log_error(f"Error: {e}")
@@ -267,7 +265,7 @@ def create_journal_entry(sales_invoice_name, billing_data):
     # Initialize journal entry rows
     je_entries = []
     je_entries.append({
-            "account": "1310 - Debtors - MH",
+            "account": "Debtors - MH",
             "party_type": "Customer",
             "party": patient_name,
             "debit_in_account_currency": 0,
@@ -279,7 +277,7 @@ def create_journal_entry(sales_invoice_name, billing_data):
     credit_payment = next((p for p in payment_details if p["payment_mode_code"].lower() == "credit"), None)
     if authorized_amount>0:
         je_entries.append({
-            "account": "1310 - Debtors - MH",  # Replace with actual debtors account
+            "account": "Debtors - MH",  # Replace with actual debtors account
             "party_type": "Customer",
             "party": customer_name,
             "debit_in_account_currency": authorized_amount,
@@ -291,7 +289,7 @@ def create_journal_entry(sales_invoice_name, billing_data):
     for payment in payment_details:
         if payment["payment_mode_code"].lower() == "cash":
             je_entries.append({
-                "account": "1110 - Cash - MH",  # Replace with actual cash account
+                "account": "Cash - MH",  # Replace with actual cash account
                 "debit_in_account_currency": payment["amount"],
                 "credit_in_account_currency": 0,
                 # "reference_type": "Sales Invoice",
@@ -317,7 +315,7 @@ def create_journal_entry(sales_invoice_name, billing_data):
             "doctype": "Journal Entry",
             "posting_date": nowdate(),
             "accounts": je_entries,
-            "user_remark": f"Sales Invoice: {sales_invoice_name}, Patient: {patient_name} (UHID: {uhid})"
+            "user_remark": f"Pharmacy Sales Invoice: {sales_invoice_name}, Patient: {patient_name} (UHID: {uhid})"
         })
         je_doc.insert(ignore_permissions=True)
         frappe.db.commit()

@@ -83,7 +83,7 @@ def create_journal_entry(billing_data):
         # Initialize journal entry rows
         je_entries = []
         je_entries.append({
-                "account": "Debtors - MH",
+                "account": "1310 - Debtors - MH",
                 "party_type": "Customer",
                 "party": customer_name,
                 "debit_in_account_currency": 0,
@@ -95,7 +95,7 @@ def create_journal_entry(billing_data):
         credit_payment = next((p for p in payment_details if p["payment_mode_code"].lower() == "credit"), None)
         if authorized_amount>0:
             je_entries.append({
-                "account": "Debtors - MH",  # Replace with actual debtors account
+                "account": "1310 - Debtors - MH",  # Replace with actual debtors account
                 "party_type": "Customer",
                 "party": customer_name,
                 "debit_in_account_currency": authorized_amount,
@@ -107,7 +107,7 @@ def create_journal_entry(billing_data):
         for payment in payment_details:
             if payment["payment_mode_code"].lower() == "cash":
                 je_entries.append({
-                    "account": "Cash - MH",  # Replace with actual cash account
+                    "account": "1110 - Cash - MH",  # Replace with actual cash account
                     "debit_in_account_currency": payment["amount"],
                     "credit_in_account_currency": 0,
                     "reference_type": "Sales Invoice",
@@ -120,7 +120,7 @@ def create_journal_entry(billing_data):
         )
         if bank_payment_total > 0:
             je_entries.append({
-                "account": "Bank Accounts - MH",  # Replace with actual bank account
+                "account": "1202 - Bank Account - 0034 - MH",  # Replace with actual bank account
                 "debit_in_account_currency": bank_payment_total,
                 "credit_in_account_currency": 0,
                 "reference_type": "Sales Invoice",

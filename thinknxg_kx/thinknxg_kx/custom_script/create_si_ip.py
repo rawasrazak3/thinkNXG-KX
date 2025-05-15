@@ -200,10 +200,10 @@ def create_sales_invoice(billing_data):
     # Tax table entry
     taxes = [{
         "charge_type": "On Net Total",
-        "account_head": "VAT 5%" if tax_amount > 0 else "VAT 0%",  # Change to your tax account
+        "account_head": "2370 - VAT 5% - MH" if tax_amount > 0 else "2360 - VAT 0% - MH",  # Change to your tax account
         # "rate": 0 if tax_amount == 0 else (tax_amount / billing_data["total_amount"]) * 100,
         "tax_amount": 0 if tax_amount == 0 else tax_amount,
-        "description": "VAT 5%" if tax_amount > 0 else "VAT 0%"
+        "description": "2370 - VAT 5% - MH" if tax_amount > 0 else "2360 - VAT 0% - MH"
     }]
     
     sales_invoice = frappe.get_doc({
@@ -217,7 +217,7 @@ def create_sales_invoice(billing_data):
         "due_date": formatted_date,
         "custom_bill_no": bill_no,
         "custom_uh_id": billing_data["uhId"],
-        "custom_admission_id": billing_data["admissionId"],
+        "custom_admission_id_": billing_data["admissionId"],
         "custom_admission_type": billing_data["admissionType"],
         "items": items,
         "discount_amount": discount_amount,
