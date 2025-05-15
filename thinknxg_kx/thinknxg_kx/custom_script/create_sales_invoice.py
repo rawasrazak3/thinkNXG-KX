@@ -87,10 +87,13 @@ def get_or_create_patient(patient_name,gender):
 def get_or_create_cost_center(department, sub_department):
     parent_cost_center_name = f"{department}(G)"
     sub_cost_center_name = f"{sub_department}"
+    print("parent", parent_cost_center_name)
+    print("sub", sub_cost_center_name)
 
     # Check if parent cost center exists, if not, create it
     existing_parent = frappe.db.exists("Cost Center", {"cost_center_name": parent_cost_center_name})
     if not existing_parent:
+        print("creating cost center")
         parent_cost_center = frappe.get_doc({
             "doctype": "Cost Center",
             "cost_center_name": parent_cost_center_name,
@@ -121,6 +124,7 @@ def get_or_create_cost_center(department, sub_department):
 
 def create_sales_invoice(billing_data):
     bill_no = billing_data["bill_no"]
+    print("bill no", bill_no)
     date = billing_data["g_creation_time"]
     datetimes =  date/1000.0
     dt = datetime.fromtimestamp(datetimes)
@@ -193,10 +197,10 @@ def create_sales_invoice(billing_data):
     # Tax table entry
     taxes = [{
         "charge_type": "On Net Total",
-        "account_head": "VAT 5% - MH" if tax_amount > 0 else "VAT 0% - MH",  # Change to your tax account
+        "account_head": "2370 - VAT 5% - MH" if tax_amount > 0 else "2360 - VAT 0% - MH",  # Change to your tax account
         # "rate": 0 if tax_amount == 0 else (tax_amount / billing_data["total_amount"]) * 100,
         "tax_amount": 0 if tax_amount == 0 else tax_amount,
-        "description": "VAT 5%" if tax_amount > 0 else "VAT 0%"
+        "description": "2370 - VAT 5% - MH" if tax_amount > 0 else "2360 - VAT 0% - MH"
     }]
     
     sales_invoice = frappe.get_doc({
@@ -263,7 +267,7 @@ def create_journal_entry(sales_invoice_name, billing_data):
     # Initialize journal entry rows
     je_entries = []
     je_entries.append({
-            "account": "Debtors - MH",
+            "account": "1310 - Debtors - MH",
             "party_type": "Customer",
             "party": patient_name,
             "debit_in_account_currency": 0,
@@ -275,7 +279,7 @@ def create_journal_entry(sales_invoice_name, billing_data):
     credit_payment = next((p for p in payment_details if p["payment_mode_code"].lower() == "credit"), None)
     if authorized_amount>0:
         je_entries.append({
-            "account": "Debtors - MH",  # Replace with actual debtors account
+            "account": "1310 - Debtors - MH",  # Replace with actual debtors account
             "party_type": "Customer",
             "party": customer_name,
             "debit_in_account_currency": authorized_amount,
@@ -287,7 +291,7 @@ def create_journal_entry(sales_invoice_name, billing_data):
     for payment in payment_details:
         if payment["payment_mode_code"].lower() == "cash":
             je_entries.append({
-                "account": "Cash - MH",  # Replace with actual cash account
+                "account": "1110 - Cash - MH",  # Replace with actual cash account
                 "debit_in_account_currency": payment["amount"],
                 "credit_in_account_currency": 0,
                 # "reference_type": "Sales Invoice",
