@@ -128,6 +128,7 @@ def create_payment_entry(billing_data):
 
         payment_entry.insert()
         frappe.db.commit()
+        payment_entry.submit()
         
         return f"Payment Entry {payment_entry.name} created successfully!"
     

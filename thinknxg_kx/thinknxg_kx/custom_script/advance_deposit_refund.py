@@ -135,6 +135,7 @@ def create_advance_refund_entry(billing_data):
 
         payment_entry.insert()
         frappe.db.commit()
+        payment_entry.submit()
 
         return f"Refund Payment Entry {payment_entry.name} created successfully!"
     

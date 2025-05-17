@@ -71,7 +71,7 @@ def create_purchase_invoice(billing_data):
         "cost_center": "METRO HOSPITALS & POLYCLINCS LLC - MH",
         "items": [
             {
-                "item_code": "medical_test",
+                "item_code": "purchase_item",
                 "qty": 1,
                 "rate": billing_data["billAmount"],
                 "amount": billing_data["billAmount"]

@@ -50,7 +50,8 @@ fixtures = [
                  "Employee-custom_column_break_32lxg",
                  "Employee-custom_medical_insurance_expiry_date",
                  "Employee-custom_work_permit__expiry_date",
-                 "Employee-custom_contract___expiry_date"
+                 "Employee-custom_contract___expiry_date",
+                 "Customer-custom_uh_id"
              ]
             ]
         ]

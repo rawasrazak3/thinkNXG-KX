@@ -225,7 +225,7 @@ def create_sales_invoice(billing_data):
     try:
         frappe.get_doc(sales_invoice).insert(ignore_permissions=True)
         frappe.db.commit()
-        # sales_invoice.submit()
+        sales_invoice.submit()
         frappe.log(f"Sales Invoice created successfully with bill_no: {bill_no}")
         create_journal_entry(sales_invoice.name, billing_data)
 
@@ -265,7 +265,7 @@ def create_journal_entry(sales_invoice_name, billing_data):
     # Initialize journal entry rows
     je_entries = []
     je_entries.append({
-            "account": "Debtors - MH",
+            "account": "1310 - Debtors - MH",
             "party_type": "Customer",
             "party": patient_name,
             "debit_in_account_currency": 0,
@@ -277,7 +277,7 @@ def create_journal_entry(sales_invoice_name, billing_data):
     credit_payment = next((p for p in payment_details if p["payment_mode_code"].lower() == "credit"), None)
     if authorized_amount>0:
         je_entries.append({
-            "account": "Debtors - MH",  # Replace with actual debtors account
+            "account": "1310 - Debtors - MH",  # Replace with actual debtors account
             "party_type": "Customer",
             "party": customer_name,
             "debit_in_account_currency": authorized_amount,
@@ -289,7 +289,7 @@ def create_journal_entry(sales_invoice_name, billing_data):
     for payment in payment_details:
         if payment["payment_mode_code"].lower() == "cash":
             je_entries.append({
-                "account": "Cash - MH",  # Replace with actual cash account
+                "account": "1110 - Cash - MH",  # Replace with actual cash account
                 "debit_in_account_currency": payment["amount"],
                 "credit_in_account_currency": 0,
                 # "reference_type": "Sales Invoice",

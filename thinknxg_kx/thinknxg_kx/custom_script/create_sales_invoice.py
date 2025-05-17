@@ -54,13 +54,14 @@ def fetch_op_billing(jwt_token, from_date, to_date):
     else:
         frappe.throw(f"Failed to fetch OP Billing data: {response.status_code} - {response.text}")
 
-def get_or_create_customer(customer_name):
+def get_or_create_customer(customer_name, uhid):
     existing_customer = frappe.db.exists("Customer", {"customer_name": customer_name})
     if existing_customer:
         return existing_customer
     
     customer = frappe.get_doc({
         "doctype": "Customer",
+        "custom_uh_id": uhid,
         "customer_name": customer_name,
         "customer_group": "Individual",
         "territory": "All Territories"
@@ -136,6 +137,7 @@ def create_sales_invoice(billing_data):
     customer_name = billing_data["payer_name"]
     patient_name = billing_data["patient_name"]
     gender = billing_data["patient_gender"]
+    uhid = billing_data["uhId"]
     customer = get_or_create_customer(customer_name)
     patient = get_or_create_patient(patient_name, gender)
     
