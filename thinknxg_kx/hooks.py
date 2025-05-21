@@ -194,7 +194,7 @@ scheduler_events = {
         "*/10 * * * *": [
             "thinknxg_kx.thinknxg_kx.custom_script.create_sales_invoice.main",
             "thinknxg_kx.thinknxg_kx.custom_script.create_si_ip.main",
-            "thinknxg_kx.thinknxg_kx.custom_script.advance_deposit.main",
+            # "thinknxg_kx.thinknxg_kx.custom_script.advance_deposit.main",
             "thinknxg_kx.thinknxg_kx.custom_script.due_settlement.main",
             "thinknxg_kx.thinknxg_kx.custom_script.create_purchase_invoice.main",
 
