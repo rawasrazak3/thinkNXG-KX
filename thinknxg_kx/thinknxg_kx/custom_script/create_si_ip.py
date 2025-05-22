@@ -85,39 +85,68 @@ def get_or_create_patient(patient_name,gender):
     return customer.name
 
 
-def get_or_create_cost_center(department, sub_department):
-    parent_cost_center_name = f"{department}(G)"
-    sub_cost_center_name = f"{sub_department}"
+# def get_or_create_cost_center(department, sub_department):
+#     parent_cost_center_name = f"{department}(G)"
+#     sub_cost_center_name = f"{sub_department}"
 
-    # Check if parent cost center exists, if not, create it
-    existing_parent = frappe.db.exists("Cost Center", {"cost_center_name": parent_cost_center_name})
-    if not existing_parent:
-        parent_cost_center = frappe.get_doc({
-            "doctype": "Cost Center",
-            "cost_center_name": parent_cost_center_name,
-            "parent_cost_center": "METRO HOSPITALS & POLYCLINCS LLC - MH",  # Root level
-            "is_group":1,
-            "company": frappe.defaults.get_defaults().get("company")
-        })
-        parent_cost_center.insert(ignore_permissions=True)
-        frappe.db.commit()
-        existing_parent = parent_cost_center.name
+#     # Check if parent cost center exists, if not, create it
+#     existing_parent = frappe.db.exists("Cost Center", {"cost_center_name": parent_cost_center_name})
+#     if not existing_parent:
+#         parent_cost_center = frappe.get_doc({
+#             "doctype": "Cost Center",
+#             "cost_center_name": parent_cost_center_name,
+#             "parent_cost_center": "METRO HOSPITALS & POLYCLINCS LLC - MH",  # Root level
+#             "is_group":1,
+#             "company": frappe.defaults.get_defaults().get("company")
+#         })
+#         parent_cost_center.insert(ignore_permissions=True)
+#         frappe.db.commit()
+#         existing_parent = parent_cost_center.name
 
-    # Check if sub cost center exists, if not, create it
-    existing_sub = frappe.db.exists("Cost Center", {"cost_center_name": sub_cost_center_name})
-    if existing_sub:
-        return existing_sub
+#     # Check if sub cost center exists, if not, create it
+#     existing_sub = frappe.db.exists("Cost Center", {"cost_center_name": sub_cost_center_name})
+#     if existing_sub:
+#         return existing_sub
 
-    sub_cost_center = frappe.get_doc({
+#     sub_cost_center = frappe.get_doc({
+#         "doctype": "Cost Center",
+#         "cost_center_name": sub_cost_center_name,
+#         "parent_cost_center": existing_parent,
+#         "company": frappe.defaults.get_defaults().get("company")
+#     })
+#     sub_cost_center.insert(ignore_permissions=True)
+#     frappe.db.commit()
+
+#     return sub_cost_center.name
+def get_or_create_cost_center(treating_department_name):
+    cost_center_name = f"{treating_department_name} - MH"
+    
+    # Check if the cost center already exists by full name
+    existing = frappe.db.exists("Cost Center", cost_center_name)
+    if existing:
+        return cost_center_name
+    
+    # Determine parent based on treating_department_name
+    if treating_department_name == "LABORATORY(G) - MH":
+        parent_cost_center = "PARAMEDICAL(G) - MH"
+    else:
+        parent_cost_center = "DOCTORS(G) - MH"
+
+    # Create new cost center with full cost_center_name as document name
+    cost_center = frappe.get_doc({
         "doctype": "Cost Center",
-        "cost_center_name": sub_cost_center_name,
-        "parent_cost_center": existing_parent,
-        "company": frappe.defaults.get_defaults().get("company")
+        "name": cost_center_name,               # Explicitly set doc name to full name with suffix
+        "cost_center_name": treating_department_name,  # Display name without suffix
+        "parent_cost_center": parent_cost_center,
+        "is_group": 0,
+        "company": "METRO HOSPITALS & POLYCLINCS LLC"
     })
-    sub_cost_center.insert(ignore_permissions=True)
+    cost_center.insert(ignore_permissions=True)
     frappe.db.commit()
+    frappe.msgprint(f"Cost Center '{cost_center_name}' created under '{parent_cost_center}'")
+    
+    return cost_center_name  # Always return the full cost center name with suffix
 
-    return sub_cost_center.name
 
 
 def create_sales_invoice(billing_data):
@@ -142,7 +171,8 @@ def create_sales_invoice(billing_data):
     has_ip_advance = any(payment.get("amount", 0) > 0 and payment.get("payment_mode_code") == "IP ADVANCE" for payment in payment_details)
 
     
-    
+    treating_department_name = billing_data.get("treating_department_name", "Default Dept")
+    cost_center = get_or_create_cost_center(treating_department_name)
     
     def get_or_create_item(service_name,service_type,service_code):
         """Check if the item exists; if not, create it."""
@@ -181,25 +211,39 @@ def create_sales_invoice(billing_data):
 
     # Ensure items and cost centers exist before adding them to Sales Invoice
     items = []
-    for service in billing_data.get("item_details", []):
-        cost_center = get_or_create_cost_center(service["department"], service["subDepartment"])
-        item_code = get_or_create_item(service["serviceName"],service["serviceType"],service["serviceCode"])  # Ensure item exists
+    # for service in billing_data.get("item_details", []):
+    #     cost_center = get_or_create_cost_center(service["department"], service["subDepartment"])
+    #     item_code = get_or_create_item(service["serviceName"],service["serviceType"],service["serviceCode"])  # Ensure item exists
 
-        items.append({
-            "item_code": item_code,
-            "qty": 1,
-            "rate": service["service_selling_amount"],
-            "amount": service["service_selling_amount"],
-            "cost_center": cost_center
-        })
+    #     items.append({
+    #         "item_code": item_code,
+    #         "qty": 1,
+    #         "rate": service["service_selling_amount"],
+    #         "amount": service["service_selling_amount"],
+    #         "cost_center": cost_center
+    #     })
 
-    
+    first_service = billing_data.get("item_details", [{}])[0]
+    # cost_center = get_or_create_cost_center(
+    #     first_service.get("department", "Default Dept"),
+    #     first_service.get("subDepartment", "Default SubDept")
+    # )
+    get_or_create_cost_center(treating_department_name)
+
+    item_rate = billing_data["total_amount"]
+    items = [{
+        "item_code": "Sales Item",  # Or a predefined item code
+        "qty": 1,
+        "rate": item_rate,
+        "amount": item_rate,
+        "cost_center": cost_center
+    }]
     discount_amount = billing_data["selling_amount"] - billing_data["total_amount"]
     tax_amount = billing_data["tax"]
 
     # Tax table entry
     taxes = [{
-        "charge_type": "On Net Total",
+        "charge_type": "Actual",
         "account_head": "2370 - VAT 5% - MH" if tax_amount > 0 else "2360 - VAT 0% - MH",  # Change to your tax account
         # "rate": 0 if tax_amount == 0 else (tax_amount / billing_data["total_amount"]) * 100,
         "tax_amount": 0 if tax_amount == 0 else tax_amount,
@@ -269,6 +313,10 @@ def create_journal_entry(sales_invoice_name, billing_data):
     payer_amounts = billing_data.get("received_amount", 0)
     payer_amount = authorized_amount + payer_amounts
 
+    sales_invoice = frappe.get_doc("Sales Invoice", sales_invoice_name)
+    bill_category = sales_invoice.get("custom_bill")
+    custom_uh_id = sales_invoice.get("custom_uh_id")
+
     # Initialize journal entry rows
     je_entries = []
     je_entries.append({
@@ -309,7 +357,7 @@ def create_journal_entry(sales_invoice_name, billing_data):
     )
     if bank_payment_total > 0:
         je_entries.append({
-            "account": "Bank Accounts - MH",  # Replace with actual bank account
+            "account": "1203 - POS Bank - MH",  # Replace with actual bank account
             "debit_in_account_currency": bank_payment_total,
             "credit_in_account_currency": 0,
             # "reference_type": "Sales Invoice",
@@ -322,6 +370,8 @@ def create_journal_entry(sales_invoice_name, billing_data):
             "doctype": "Journal Entry",
             "posting_date": nowdate(),
             "accounts": je_entries,
+            "custom_bill_category": bill_category,   # Set from Sales Invoice
+            "custom_uh_id": custom_uh_id,  
             "user_remark": f"Sales Invoice: {sales_invoice_name}, Patient: {patient_name} (UHID: {uhid})"
         })
         je_doc.insert(ignore_permissions=True)
