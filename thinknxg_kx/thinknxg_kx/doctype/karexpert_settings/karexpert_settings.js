@@ -77,7 +77,11 @@ frappe.ui.form.on("Karexpert Table", {
 			"GRN CREATION DETAILS": {
 				method: "thinknxg_kx.thinknxg_kx.custom_script.create_purchase_invoice.main",
 				message: "Purchase Invoice Created"
-			}
+			},
+			"GRN CREATION SUMMARY": {
+				method: "thinknxg_kx.thinknxg_kx.custom_script.grn_creation_summary.main",
+				message: "Purchase  Invoice Created"
+			},
 		};
 
 		let billing_info = method_map[row.billing_type];
